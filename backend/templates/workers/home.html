@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Worker Dashboard</title>
+    <link rel="stylesheet" href="/static/workers/home.css">
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="main-header">
+    <div class="header-left">
+        <h1>Highway Surveillance</h1>
+        <span class="subtitle">Worker Dashboard</span>
+    </div>
+
+    <nav class="nav-links">
+        <a href="/home/" class="active">Home</a>
+        <a href="/logout/">Logout</a>
+    </nav>
+</header>
+
+<!-- ================= CONTENT ================= -->
+<main class="container">
+
+    <section class="page-header">
+        <h2>Ongoing Surveys</h2>
+        <p>Active field surveys available for monitoring</p>
+    </section>
+
+    {% if surveys %}
+    <section class="survey-grid">
+        {% for s in surveys %}
+        <article class="survey-card">
+
+            <div class="survey-card-top">
+                <div class="survey-id">Survey {{ s.id }}</div>
+                <div class="survey-date">
+                    {{ s.uploaded_at|date:"M d, Y · H:i" }}
+                </div>
+            </div>
+
+            <div class="survey-location">
+                {{ s.location_description }}
+            </div>
+
+            <div class="survey-footer">
+                <a href="/survey/{{ s.id }}/" class="btn-primary">
+                    View Survey
+                </a>
+            </div>
+
+        </article>
+        {% endfor %}
+    </section>
+    {% else %}
+        <div class="empty-state">
+            No active surveys at the moment.
+        </div>
+    {% endif %}
+
+</main>
+
+</body>
+</html>

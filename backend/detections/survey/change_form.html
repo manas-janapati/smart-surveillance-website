@@ -1,0 +1,39 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block after_related_objects %}
+<h2>Detection Map</h2>
+
+<div id="map" style="height:500px;"></div>
+
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    var map = L.map('map');
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+    }).addTo(map);
+
+    var bounds = [];
+
+    {% for d in original.detections.all %}
+        L.marker([{{ d.latitude }}, {{ d.longitude }}])
+            .addTo(map)
+            .bindPopup(
+                "Frame: {{ d.frame_id }}<br>" +
+                "Confidence: {{ d.confidence }}"
+            );
+
+        bounds.push([{{ d.latitude }}, {{ d.longitude }}]);
+    {% endfor %}
+
+    if (bounds.length > 0) {
+        map.fitBounds(bounds);
+    }
+</script>
+{% endblock %}

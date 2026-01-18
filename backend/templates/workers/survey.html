@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Survey Details</title>
+
+    <link rel="stylesheet" href="/static/workers/survey.css">
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+
+<!-- ================= HEADER ================= -->
+<header class="main-header">
+    <div class="header-left">
+        <h1>Highway Surveillance</h1>
+        <span class="subtitle">Survey Details</span>
+    </div>
+
+    <nav class="nav-links">
+        <a href="/home/">Home</a>
+        <a href="/logout/">Logout</a>
+    </nav>
+</header>
+
+<!-- ================= CONTENT ================= -->
+<main class="container">
+
+    <!-- Survey Info -->
+    <section class="survey-info-card">
+        <div class="survey-info-left">
+            <h2 id="survey-title">Survey</h2>
+            <p id="survey-location" class="survey-info-location"></p>
+        </div>
+
+        <div class="survey-info-right">
+            <div class="info-block">
+                <span class="info-label">Uploaded</span>
+                <span id="survey-date" class="info-value"></span>
+            </div>
+            <div class="info-block">
+                <span class="info-label">Detections</span>
+                <span id="survey-count" class="info-value"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map -->
+    <section class="map-card">
+        <h3>Detection Map</h3>
+        <div id="map"></div>
+    </section>
+
+</main>
+
+<script>
+const surveyId = {{ survey_id }};
+
+fetch(`/api/survey/${surveyId}/`)
+    .then(res => res.json())
+    .then(data => {
+        // Populate info
+        document.getElementById("survey-title").innerText =
+            `Survey #${data.id}`;
+
+        document.getElementById("survey-location").innerText =
+            data.location;
+
+        document.getElementById("survey-date").innerText =
+            new Date(data.uploaded_at).toLocaleString();
+
+        document.getElementById("survey-count").innerText =
+            data.detections.length;
+
+        // Map
+        const map = L.map("map");
+
+        const street = L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            { maxZoom: 19 }
+        );
+
+        const satellite = L.tileLayer(
+            "https://server.arcgisonline.com/ArcGIS/rest/services/" +
+            "World_Imagery/MapServer/tile/{z}/{y}/{x}",
+            { maxZoom: 19 }
+        );
+
+        street.addTo(map);
+
+        const bounds = [];
+
+        data.detections.forEach(d => {
+            L.marker([d.lat, d.lon])
+                .addTo(map)
+                .bindPopup(`Confidence: ${d.confidence.toFixed(3)}`);
+            bounds.push([d.lat, d.lon]);
+        });
+
+        if (bounds.length) {
+            map.fitBounds(bounds, { padding: [40, 40] });
+        }
+
+        L.control.layers(
+            { "Street": street, "Satellite": satellite },
+            null,
+            { collapsed: false }
+        ).addTo(map);
+
+        setTimeout(() => map.invalidateSize(), 300);
+    });
+</script>
+
+</body>
+</html>
