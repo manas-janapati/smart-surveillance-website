@@ -5,7 +5,6 @@ class Survey(models.Model):
     location_description = models.CharField(max_length=255)
     description = models.TextField(blank=True)
 
-    # Used ONLY during creation
     jsonl_file = models.FileField(
         upload_to="uploads/",
         blank=True,

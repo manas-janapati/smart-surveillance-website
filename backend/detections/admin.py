@@ -4,9 +4,6 @@ from django.utils.safestring import mark_safe
 from .models import Survey, Detection
 
 
-# -----------------------------
-# Detection inline (CHANGE ONLY)
-# -----------------------------
 class DetectionInline(admin.TabularInline):
     model = Detection
     extra = 0
@@ -23,18 +20,14 @@ class DetectionInline(admin.TabularInline):
     classes = ["collapse"]
 
 
-# -----------------------------
-# Survey admin
-# -----------------------------
 @admin.register(Survey)
 class SurveyAdmin(admin.ModelAdmin):
     list_display = ("id", "location_description", "uploaded_at")
     ordering = ("-uploaded_at",)
 
-    # -------- ADD vs CHANGE behavior --------
     def get_inlines(self, request, obj=None):
         if obj is None:
-            return []  # NO detections on ADD page
+            return []  # NO detections
         return [DetectionInline]
 
     def get_fields(self, request, obj=None):
@@ -44,7 +37,6 @@ class SurveyAdmin(admin.ModelAdmin):
                 "description",
                 "jsonl_file",
             )
-        # CHANGE page
         return (
             "location_description",
             "description",
@@ -57,12 +49,10 @@ class SurveyAdmin(admin.ModelAdmin):
             return ("uploaded_at", "map_preview")
         return ()
 
-    # -------- SAVE LOGIC --------
     def save_model(self, request, obj, form, change):
         is_new = obj.pk is None
         super().save_model(request, obj, form, change)
 
-        # Parse JSONL ONLY once (on creation)
         if is_new and obj.jsonl_file:
             with obj.jsonl_file.open("r") as f:
                 for line in f:
@@ -76,12 +66,10 @@ class SurveyAdmin(admin.ModelAdmin):
                         confidence=record["confidence"],
                     )
 
-            # Remove file to prevent reprocessing
             obj.jsonl_file.delete(save=False)
             obj.jsonl_file = None
             obj.save(update_fields=["jsonl_file"])
 
-    # -------- MAP PREVIEW (ADMIN SAFE + SATELLITE) --------
     def map_preview(self, obj):
         detections = obj.detections.all()
         if not detections.exists():
