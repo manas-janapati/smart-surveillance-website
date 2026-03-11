@@ -131,3 +131,8 @@ STATICFILES_DIRS = [
 # DEFAULT PRIMARY KEY
 # --------------------------------------------------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://edge-surveillance-backend.onrender.com"
+]

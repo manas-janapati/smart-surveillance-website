@@ -11,6 +11,7 @@ from detections.models import Survey, Detection
 
 @login_required
 def surveys_api(request):
+
     surveys = Survey.objects.order_by("-uploaded_at")
 
     data = [
@@ -27,7 +28,11 @@ def surveys_api(request):
 
 @login_required
 def survey_detail_api(request, survey_id):
-    survey = Survey.objects.get(id=survey_id)
+
+    try:
+        survey = Survey.objects.get(id=survey_id)
+    except Survey.DoesNotExist:
+        return JsonResponse({"error": "Survey not found"}, status=404)
 
     detections = [
         {
@@ -54,9 +59,12 @@ def survey_detail_api(request, survey_id):
 def start_survey(request):
 
     if request.method != "POST":
-        return JsonResponse({"error": "POST required"}, status=400)
+        return JsonResponse({"error": "POST required"}, status=405)
 
-    data = json.loads(request.body or "{}")
+    try:
+        data = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
 
     survey = Survey.objects.create(
         location_description=data.get("location", "Highway Survey"),
@@ -72,18 +80,29 @@ def start_survey(request):
 def ingest_detection(request):
 
     if request.method != "POST":
-        return JsonResponse({"error": "POST required"}, status=400)
+        return JsonResponse({"error": "POST required"}, status=405)
 
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
 
-    survey = Survey.objects.get(id=data["survey_id"])
+    survey_id = data.get("survey_id")
+
+    if not survey_id:
+        return JsonResponse({"error": "survey_id missing"}, status=400)
+
+    try:
+        survey = Survey.objects.get(id=survey_id)
+    except Survey.DoesNotExist:
+        return JsonResponse({"error": "Survey not found"}, status=404)
 
     Detection.objects.create(
         survey=survey,
-        frame_id=data["frame_id"],
+        frame_id=data.get("frame_id"),
         latitude=data["gps"]["lat"],
         longitude=data["gps"]["lon"],
-        confidence=data["confidence"],
+        confidence=data.get("confidence", 0),
     )
 
     return JsonResponse({"status": "saved"})
