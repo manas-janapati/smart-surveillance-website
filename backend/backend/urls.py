@@ -14,25 +14,14 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+"""
+URL configuration for backend project.
+"""
+
 from django.contrib import admin
-from django.urls import path
-from workers import views as worker_views
-from workers import api as worker_api
+from django.urls import path, include
 
 urlpatterns = [
-    # WORKER ENTRY POINT
-    path("", worker_views.login_view, name="worker_login"),
-
-    # WORKER PAGES
-    path("home/", worker_views.home, name="worker_home"),
-    path("survey/<int:survey_id>/", worker_views.survey_page, name="worker_survey"),
-    path("profile/", worker_views.profile, name="worker_profile"),
-    path("logout/", worker_views.logout_view, name="worker_logout"),
-
-    # WORKER APIs
-    path("api/surveys/", worker_api.surveys_api),
-    path("api/survey/<int:survey_id>/", worker_api.survey_detail_api),
-
-    # ADMIN
+    path("", include("workers.urls")),
     path("admin/", admin.site.urls),
 ]
